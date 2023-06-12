@@ -1,6 +1,8 @@
 package com.mygdx.game;
 import static com.mygdx.game.Enemy.STATE.MOVING_DOWN;
 import static com.mygdx.game.Enemy.STATE.MOVING_UP;
+import static com.mygdx.game.Spaceship.STATE.MOVING_DOWN;
+import static com.mygdx.game.Spaceship.STATE.MOVING_UP;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -34,6 +36,7 @@ public class Player extends Role{
         }
     }
 
-    public Vector2 getPosition() {
+    public void dispose() {
+        super(dispose());
     }
 }
