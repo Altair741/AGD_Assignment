@@ -18,6 +18,9 @@ public class MyGdxGame extends Game implements ApplicationListener {
 	private Player player;
 	//private Enemy enemy;
 
+	private float speed = 50f;
+
+
 	@Override
 	public void create() {
 		Gdx.app.log("MyGdxGame: "," create");
