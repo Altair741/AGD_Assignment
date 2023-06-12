@@ -4,6 +4,7 @@ import static com.mygdx.game.Enemy.STATE.MOVING_UP;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class Player extends Role{
     private final Texture texture;
@@ -31,5 +32,8 @@ public class Player extends Role{
             default:
                 // code block
         }
+    }
+
+    public Vector2 getPosition() {
     }
 }
