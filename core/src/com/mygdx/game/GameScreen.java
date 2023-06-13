@@ -175,6 +175,10 @@ public class GameScreen extends ScreenAdapter {
         opacityTrigger.set(opacityObject.getRectangle());
 
         restartActive = false;
+
+        //Play background music
+        BackgroundMusic backgroundMusic = new BackgroundMusic("music/Fun_Times.wav");
+        backgroundMusic.play();
     }
 
     @Override
