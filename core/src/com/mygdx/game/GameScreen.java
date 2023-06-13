@@ -212,19 +212,133 @@ public class GameScreen extends ScreenAdapter {
 
     /** Update the game world. Called from render(). */
     private void update() {
-        // Update player position
-        playerSprite.setX(playerSprite.getX() + playerDelta.x);
-        playerSprite.setY(playerSprite.getY() + playerDelta.y);
+        dt = Gdx.graphics.getDeltaTime();
 
-        // Update goal bobbing
-        goalBobSine += dt * 2.0f * MathUtils.PI;
-        goalSprite.setY(goalPosition.y + MathUtils.sin(goalBobSine) * GOAL_BOB_HEIGHT);
+        //Touch Input Info
+        boolean checkTouch = Gdx.input.isTouched();
+        int touchX = Gdx.input.getX();
+        int touchY = Gdx.input.getY();
 
-        // Check collision with goal
-        if (playerSprite.getBoundingRectangle().overlaps(goalSprite.getBoundingRectangle())) {
-            gameState = GameState.COMPLETE;
+        //Update Game State based on input
+        switch (gameState) {
+
+            case PLAYING:
+                //Poll user for input
+                moveLeftButton.update(checkTouch, touchX, touchY);
+                moveRightButton.update(checkTouch, touchX, touchY);
+                moveDownButton.update(checkTouch, touchX, touchY);
+                moveUpButton.update(checkTouch, touchX, touchY);
+
+                int moveX = 0;
+                int moveY = 0;
+                if (Gdx.input.isKeyPressed(Input.Keys.DPAD_LEFT) || moveLeftButton.isDown) {
+                    moveLeftButton.isDown = true;
+                    moveX -= 1;
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.DPAD_RIGHT) || moveRightButton.isDown) {
+                    moveRightButton.isDown = true;
+                    moveX += 1;
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.DPAD_DOWN) || moveDownButton.isDown) {
+                    moveDownButton.isDown = true;
+                    moveY -= 1;
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.DPAD_UP) || moveUpButton.isDown) {
+                    moveUpButton.isDown = true;
+                    moveY += 1;
+                }
+
+                // Determine Character Movement Distance
+                playerDelta.x = moveX * MOVEMENT_SPEED * dt;
+                playerDelta.y = moveY * MOVEMENT_SPEED * dt;
+
+                // Check movement against grid
+                if (playerDelta.len2() > 0) { //Don't do anything if we're not moving
+                    //Retrieve Collision layer
+                    MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
+                    TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
+
+                    //  Determine bounds to check within
+
+                    // Find top-right corner tile
+                    int right = (int) Math.ceil(Math.max(playerSprite.getX() + playerSprite.getWidth(),playerSprite.getX() + playerSprite.getWidth() + playerDelta.x));
+                    int top = (int) Math.ceil(Math.max(playerSprite.getY() + playerSprite.getHeight(),playerSprite.getY() + playerSprite.getHeight() + playerDelta.y));
+
+                    // Find bottom-left corner tile
+                    int left = (int) Math.floor(Math.min(playerSprite.getX(),playerSprite.getX() + playerDelta.x));
+                    int bottom = (int) Math.floor(Math.min(playerSprite.getY(),playerSprite.getY() + playerDelta.y));
+
+                    // Divide bounds by tile sizes to retrieve tile indices
+                    right /= tileLayer.getTileWidth();
+                    top /= tileLayer.getTileHeight();
+                    left /= tileLayer.getTileWidth();
+                    bottom /= tileLayer.getTileHeight();
+
+
+
+                    //  Loop through selected tiles and correct by each axis
+
+
+                    for (int y = bottom; y <= top; y++) {
+                        for (int x = left; x <= right; x++) {
+                            TiledMapTileLayer.Cell targetCell = tileLayer.getCell(x, y);
+                            // If the cell is empty, ignore it
+                            if (targetCell == null) continue;
+                            // Otherwise correct against tested squares
+                            tileRectangle.x = x * tileLayer.getTileWidth();
+                            tileRectangle.y = y * tileLayer.getTileHeight();
+
+                            playerDeltaRectangle.x = playerSprite.getX() + playerDelta.x;
+                            playerDeltaRectangle.y = playerSprite.getY();
+                            if (tileRectangle.overlaps(playerDeltaRectangle)) playerDelta.x = 0;
+
+                            playerDeltaRectangle.x = playerSprite.getX();
+                            playerDeltaRectangle.y = playerSprite.getY() + playerDelta.y;
+                            if (tileRectangle.overlaps(playerDeltaRectangle)) playerDelta.y = 0;
+                        }
+                    }
+
+                    // Move player and camera
+                    playerSprite.translate(playerDelta.x, playerDelta.y);
+                    camera.translate(playerDelta);
+                }
+
+                //  Check if player has met the winning condition
+                if (playerSprite.getBoundingRectangle().overlaps(goalSprite.getBoundingRectangle())) {
+                    //Player has won!
+                    gameState = GameState.COMPLETE;
+                }
+
+                //  Calculate overhead layer opacity
+                if (playerSprite.getBoundingRectangle().overlaps(opacityTrigger)) {
+                    overheadOpacity -= dt * 5.0f;
+                } else {
+                    overheadOpacity += dt * 5.0f;
+                }
+                overheadOpacity = MathUtils.clamp(overheadOpacity, 0.0f, 1.0f);
+
+                break;
+
+            case COMPLETE:
+                //Poll for input
+                restartButton.update(checkTouch, touchX, touchY);
+
+                if (Gdx.input.isKeyPressed(Input.Keys.DPAD_CENTER) || restartButton.isDown) {
+                    restartButton.isDown = true;
+                    restartActive = true;
+                } else if (restartActive) {
+                    newGame();
+                }
+                break;
         }
+
+        goalBobSine += dt;
+        goalBobSine %= Math.PI;
+        goalSprite.setPosition(goalPosition.x, goalPosition.y + (GOAL_BOB_HEIGHT / 2.0f) -
+                (GOAL_BOB_HEIGHT * (float) Math.sin(goalBobSine)));
     }
+
+}
 
     /** Render the game world. Called from render(). */
     private void renderGame() {
