@@ -1,6 +1,6 @@
 package com.mygdx.game;
 
 public class Role {
-    public Role(void dispose) {
+    public Role(String dispose) {
     }
 }

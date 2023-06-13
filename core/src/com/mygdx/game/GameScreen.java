@@ -96,7 +96,7 @@ public class GameScreen extends ScreenAdapter {
 
         tiledMap = new TmxMapLoader().load("other/MageCity.tmx");
         tiledMapRenderer = new LayerRenderer(tiledMap);
-        //TODO:tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, spriteBatch);
+        //tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, spriteBatch);
 
         //Camera
         float w = Gdx.graphics.getWidth();
@@ -170,7 +170,7 @@ public class GameScreen extends ScreenAdapter {
         goalPosition.x = goalObject.getRectangle().x - 16;
         goalPosition.y = goalObject.getRectangle().y - 16;
 
-        //TODO Load Opacity Trigger Volume
+        // Load Opacity Trigger Volume
         RectangleMapObject opacityObject = (RectangleMapObject)objectLayer.getObjects().get("Fadeout");
         opacityTrigger.set(opacityObject.getRectangle());
 
@@ -338,8 +338,65 @@ public class GameScreen extends ScreenAdapter {
                 (GOAL_BOB_HEIGHT * (float) Math.sin(goalBobSine)));
     }
 
-}
+public void render () {
+		//Game World Update ------------------------------------------------------------------------
 
+        // Set dt
+
+		update();
+
+		//Rendering --------------------------------------------------------------------------------
+
+		//Clear the screen every frame before drawing.
+		Gdx.gl.glClearColor(0, 0, 0, 1);
+		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA); //Allows transparent sprites/tiles
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+		camera.update();
+		tiledMapRenderer.setView(camera);
+
+        // Draw only non-overhead layers
+		TiledMapTileLayer overhead = (TiledMapTileLayer) tiledMap.getLayers().get("Overhead");
+		for (MapLayer l: tiledMap.getLayers()) {
+			if (! l.isVisible() || l == overhead || ! (l instanceof TiledMapTileLayer)) {
+				continue;
+			}
+			tiledMapRenderer.renderTileLayer((TiledMapTileLayer) l);
+		}
+		//Apply camera to spritebatch and draw player
+		spriteBatch.setProjectionMatrix(camera.combined);
+        spriteBatch.begin();
+		goalSprite.draw(spriteBatch);
+		playerSprite.draw(spriteBatch);
+		spriteBatch.end();
+		//  Set overhead layer opacity
+		overhead.setOpacity(MathUtils.lerp(0.8f, 1.0f, overheadOpacity));
+
+        // Draw overhead layer
+		tiledMapRenderer.renderTileLayer(overhead);
+
+		//Draw UI
+		uiBatch.begin();
+		switch(gameState) {
+			//if gameState is Running: Draw Controls
+			case PLAYING: {
+				moveLeftButton.draw(uiBatch);
+				moveRightButton.draw(uiBatch);
+				moveDownButton.draw(uiBatch);
+				moveUpButton.draw(uiBatch);
+
+                // This text will display once the entire exercise is completed
+                bmfont.setColor(1f, 1f, 1f, 1f - overheadOpacity);
+				bmfont.draw(uiBatch, "HIDDEN", Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() * 5 / 6, 0f, 1, false);
+            } break;
+			//if gameState is Complete: Draw Restart button
+			case COMPLETE: {
+				restartButton.draw(uiBatch);
+            } break;
+		}
+		uiBatch.end();
+
+	}
     /** Render the game world. Called from render(). */
     private void renderGame() {
         // Set the camera matrix

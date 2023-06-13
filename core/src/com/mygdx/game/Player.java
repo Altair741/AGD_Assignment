@@ -6,7 +6,6 @@ import static com.mygdx.game.Spaceship.STATE.MOVING_UP;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.math.Vector2;
 
 public class Player extends Role{
     private final Texture texture;
@@ -15,6 +14,7 @@ public class Player extends Role{
     private int currentState;
 
     public Player(String texturePath) {
+        super(texturePath);
         this.texture = new Texture(texturePath);
 
         // Place it in the middle of the screen
@@ -36,7 +36,7 @@ public class Player extends Role{
         }
     }
 
-    public void dispose() {
+    public String dispose() {
         super(dispose());
     }
 }
